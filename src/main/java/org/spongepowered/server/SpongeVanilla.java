@@ -34,17 +34,6 @@ import org.slf4j.Logger;
 import org.spongepowered.api.GameState;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.SpongeEventFactory;
-import org.spongepowered.api.event.cause.Cause;
-import org.spongepowered.api.event.game.state.GameAboutToStartServerEvent;
-import org.spongepowered.api.event.game.state.GameConstructionEvent;
-import org.spongepowered.api.event.game.state.GameInitializationEvent;
-import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
-import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
-import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
-import org.spongepowered.api.event.game.state.GameStartedServerEvent;
-import org.spongepowered.api.event.game.state.GameStartingServerEvent;
-import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
-import org.spongepowered.api.event.game.state.GameStoppingServerEvent;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.sql.SqlService;
@@ -75,7 +64,6 @@ public final class SpongeVanilla extends MetaPluginContainer {
     public static final MinecraftServer SERVER = SpongeVanillaLauncher.getServer();
 
     private final SpongeGame game;
-    private Cause gameCause;
 
     private SpongeVanilla() {
         super(SpongeVanillaLauncher.getMetadata().get(SpongeImpl.ECOSYSTEM_ID, "SpongeVanilla"),
@@ -95,8 +83,6 @@ public final class SpongeVanilla extends MetaPluginContainer {
         this.game = SpongeImpl.getGame();
 
         RegistryHelper.setFinalStatic(Sponge.class, "game", this.game);
-
-        this.gameCause = Cause.source(this.game).build();
     }
 
     public void preInitialize() throws Exception {
@@ -110,9 +96,9 @@ public final class SpongeVanilla extends MetaPluginContainer {
 
         SpongeImpl.getLogger().info("Loading plugins...");
         ((VanillaPluginManager) this.game.getPluginManager()).loadPlugins();
-        SpongeImpl.postState(GameState.CONSTRUCTION, SpongeEventFactory.createGameConstructionEvent(this.gameCause));
+        SpongeImpl.postState(GameState.CONSTRUCTION, SpongeEventFactory.createGameConstructionEvent(Sponge.getCauseStackManager().getCurrentCause()));
         SpongeImpl.getLogger().info("Initializing plugins...");
-        SpongeImpl.postState(GameState.PRE_INITIALIZATION, SpongeEventFactory.createGamePreInitializationEvent(this.gameCause));
+        SpongeImpl.postState(GameState.PRE_INITIALIZATION, SpongeEventFactory.createGamePreInitializationEvent(Sponge.getCauseStackManager().getCurrentCause()));
         this.game.getRegistry().preInit();
 
         checkState(Class.forName("org.spongepowered.api.entity.ai.task.AbstractAITask").getSuperclass()
@@ -137,35 +123,35 @@ public final class SpongeVanilla extends MetaPluginContainer {
             this.game.getServiceManager().setProvider(this, PermissionService.class, service);
         }
 
-        SpongeImpl.postState(GameState.INITIALIZATION, SpongeEventFactory.createGameInitializationEvent(this.gameCause));
+        SpongeImpl.postState(GameState.INITIALIZATION, SpongeEventFactory.createGameInitializationEvent(Sponge.getCauseStackManager().getCurrentCause()));
 
         SpongeImpl.getRegistry().postInit();
 
-        SpongeImpl.postState(GameState.POST_INITIALIZATION, SpongeEventFactory.createGamePostInitializationEvent(this.gameCause));
+        SpongeImpl.postState(GameState.POST_INITIALIZATION, SpongeEventFactory.createGamePostInitializationEvent(Sponge.getCauseStackManager().getCurrentCause()));
 
         SpongeImpl.getLogger().info("Successfully loaded and initialized plugins.");
 
-        SpongeImpl.postState(GameState.LOAD_COMPLETE, SpongeEventFactory.createGameLoadCompleteEvent(this.gameCause));
+        SpongeImpl.postState(GameState.LOAD_COMPLETE, SpongeEventFactory.createGameLoadCompleteEvent(Sponge.getCauseStackManager().getCurrentCause()));
     }
 
     public void onServerAboutToStart() {
         ((IMixinServerCommandManager) SpongeImpl.getServer().getCommandManager()).registerEarlyCommands(this.game);
-        SpongeImpl.postState(GameState.SERVER_ABOUT_TO_START, SpongeEventFactory.createGameAboutToStartServerEvent(this.gameCause));
+        SpongeImpl.postState(GameState.SERVER_ABOUT_TO_START, SpongeEventFactory.createGameAboutToStartServerEvent(Sponge.getCauseStackManager().getCurrentCause()));
     }
 
     public void onServerStarting() {
-        SpongeImpl.postState(GameState.SERVER_STARTING, SpongeEventFactory.createGameStartingServerEvent(this.gameCause));
-        SpongeImpl.postState(GameState.SERVER_STARTED, SpongeEventFactory.createGameStartedServerEvent(this.gameCause));
+        SpongeImpl.postState(GameState.SERVER_STARTING, SpongeEventFactory.createGameStartingServerEvent(Sponge.getCauseStackManager().getCurrentCause()));
+        SpongeImpl.postState(GameState.SERVER_STARTED, SpongeEventFactory.createGameStartedServerEvent(Sponge.getCauseStackManager().getCurrentCause()));
         ((IMixinServerCommandManager) SpongeImpl.getServer().getCommandManager()).registerLowPriorityCommands(this.game);
         SpongePlayerDataHandler.init();
     }
 
     public void onServerStopping() {
-        SpongeImpl.postState(GameState.SERVER_STOPPING, SpongeEventFactory.createGameStoppingServerEvent(this.gameCause));
+        SpongeImpl.postState(GameState.SERVER_STOPPING, SpongeEventFactory.createGameStoppingServerEvent(Sponge.getCauseStackManager().getCurrentCause()));
     }
 
     public void onServerStopped() throws IOException {
-        SpongeImpl.postState(GameState.SERVER_STOPPED, SpongeEventFactory.createGameStoppedServerEvent(this.gameCause));
+        SpongeImpl.postState(GameState.SERVER_STOPPED, SpongeEventFactory.createGameStoppedServerEvent(Sponge.getCauseStackManager().getCurrentCause()));
         ((SqlServiceImpl) this.game.getServiceManager().provideUnchecked(SqlService.class)).close();
     }
 

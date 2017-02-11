@@ -27,9 +27,8 @@ package org.spongepowered.server.mixin.core.world.chunk;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.event.SpongeEventFactory;
-import org.spongepowered.api.event.cause.Cause;
-import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -59,12 +58,16 @@ public abstract class MixinChunk implements org.spongepowered.api.world.Chunk {
 
     @Inject(method = "onChunkLoad", at = @At("RETURN"))
     private void postChunkLoad(CallbackInfo ci) {
-        SpongeImpl.postEvent(SpongeEventFactory.createLoadChunkEvent(Cause.of(NamedCause.source(this.world)), this));
+        Sponge.getCauseStackManager().pushCause(this.world);
+        SpongeImpl.postEvent(SpongeEventFactory.createLoadChunkEvent(Sponge.getCauseStackManager().getCurrentCause(), this));
+        Sponge.getCauseStackManager().popCause();
     }
 
     @Inject(method = "onChunkUnload", at = @At("RETURN"))
     private void postChunkUnload(CallbackInfo ci) {
-        SpongeImpl.postEvent(SpongeEventFactory.createUnloadChunkEvent(Cause.of(NamedCause.source(this.world)), this));
+        Sponge.getCauseStackManager().pushCause(this.world);
+        SpongeImpl.postEvent(SpongeEventFactory.createUnloadChunkEvent(Sponge.getCauseStackManager().getCurrentCause(), this));
+        Sponge.getCauseStackManager().popCause();
     }
 
 }
