@@ -44,18 +44,8 @@ import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.util.datafix.DataFixesManager;
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
-import org.spongepowered.api.GameState;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.event.game.state.GameAboutToStartServerEvent;
-import org.spongepowered.api.event.game.state.GameConstructionEvent;
-import org.spongepowered.api.event.game.state.GameInitializationEvent;
-import org.spongepowered.api.event.game.state.GameLoadCompleteEvent;
-import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
-import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
-import org.spongepowered.api.event.game.state.GameStartedServerEvent;
-import org.spongepowered.api.event.game.state.GameStartingServerEvent;
-import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
-import org.spongepowered.api.event.game.state.GameStoppingServerEvent;
+import org.spongepowered.api.event.SpongeEventFactory;
 import org.spongepowered.api.service.permission.PermissionService;
 import org.spongepowered.api.service.permission.SubjectData;
 import org.spongepowered.api.service.sql.SqlService;
@@ -169,9 +159,9 @@ public final class SpongeVanilla extends AbstractPluginContainer {
 
         SpongeImpl.getLogger().info("Loading plugins...");
         ((VanillaPluginManager) this.game.getPluginManager()).loadPlugins();
-        SpongeImpl.postState(GameConstructionEvent.class, GameState.CONSTRUCTION);
+        SpongeImpl.postState(SpongeEventFactory.createGameConstructionEvent(SpongeImpl.getGameCause()));
         SpongeImpl.getLogger().info("Initializing plugins...");
-        SpongeImpl.postState(GamePreInitializationEvent.class, GameState.PRE_INITIALIZATION);
+        SpongeImpl.postState(SpongeEventFactory.createGamePreInitializationEvent(SpongeImpl.getGameCause()));
         this.game.getRegistry().preInit();
 
         checkState(Class.forName("org.spongepowered.api.entity.ai.task.AbstractAITask").getSuperclass()
@@ -196,35 +186,35 @@ public final class SpongeVanilla extends AbstractPluginContainer {
             this.game.getServiceManager().setProvider(this, PermissionService.class, service);
         }
 
-        SpongeImpl.postState(GameInitializationEvent.class, GameState.INITIALIZATION);
+        SpongeImpl.postState(SpongeEventFactory.createGameInitializationEvent(SpongeImpl.getGameCause()));
 
         SpongeImpl.getRegistry().postInit();
 
-        SpongeImpl.postState(GamePostInitializationEvent.class, GameState.POST_INITIALIZATION);
+        SpongeImpl.postState(SpongeEventFactory.createGamePostInitializationEvent(SpongeImpl.getGameCause()));
 
         SpongeImpl.getLogger().info("Successfully loaded and initialized plugins.");
 
-        SpongeImpl.postState(GameLoadCompleteEvent.class, GameState.LOAD_COMPLETE);
+        SpongeImpl.postState(SpongeEventFactory.createGameLoadCompleteEvent(SpongeImpl.getGameCause()));
     }
 
     public void onServerAboutToStart() {
         ((IMixinServerCommandManager) SpongeImpl.getServer().getCommandManager()).registerEarlyCommands(this.game);
-        SpongeImpl.postState(GameAboutToStartServerEvent.class, GameState.SERVER_ABOUT_TO_START);
+        SpongeImpl.postState(SpongeEventFactory.createGameAboutToStartServerEvent(SpongeImpl.getGameCause()));
     }
 
     public void onServerStarting() {
-        SpongeImpl.postState(GameStartingServerEvent.class, GameState.SERVER_STARTING);
-        SpongeImpl.postState(GameStartedServerEvent.class, GameState.SERVER_STARTED);
+        SpongeImpl.postState(SpongeEventFactory.createGameStartingServerEvent(SpongeImpl.getGameCause()));
+        SpongeImpl.postState(SpongeEventFactory.createGameStartedServerEvent(SpongeImpl.getGameCause()));
         ((IMixinServerCommandManager) SpongeImpl.getServer().getCommandManager()).registerLowPriorityCommands(this.game);
         SpongePlayerDataHandler.init();
     }
 
     public void onServerStopping() {
-        SpongeImpl.postState(GameStoppingServerEvent.class, GameState.SERVER_STOPPING);
+        SpongeImpl.postState(SpongeEventFactory.createGameStoppingServerEvent(SpongeImpl.getGameCause()));
     }
 
     public void onServerStopped() throws IOException {
-        SpongeImpl.postState(GameStoppedServerEvent.class, GameState.SERVER_STOPPED);
+        SpongeImpl.postState(SpongeEventFactory.createGameStoppedEvent(SpongeImpl.getGameCause()));
         ((SqlServiceImpl) this.game.getServiceManager().provideUnchecked(SqlService.class)).close();
     }
 
